@@ -1,32 +1,32 @@
 #include "web_interface.h"
-#include "wifi_manager.h"
-#include "relay_control.h"
+#include "config.h"
+#include "time_utils.h"
+#include <IotWebConf.h>
+extern IotWebConf iotWebConf;
 
-ESP8266WebServer server(80);
+void handleRoot() {
+    String html = "<!DOCTYPE html><html><head><meta charset='utf-8'>";
+    html += "<title>" PROJECT_NAME "</title>";
+    html += "<style>body{font-family:Arial; text-align:center;}</style></head><body>";
+    html += "<h1>" PROJECT_NAME " v" PROJECT_VERSION "</h1>";
+    html += "<p><strong>Statut :</strong> Connecté</p>";
+    html += "<p><strong>IP :</strong> " + WiFi.localIP().toString() + "</p>";
+    html += "<p><strong>Ville :</strong> " + String(cityValue) + "</p>";
+    html += "<p><strong>Lever du soleil :</strong> " + String(sunriseHour, 2) + "h</p>";
+    html += "<p><strong>Coucher du soleil :</strong> " + String(sunsetHour, 2) + "h</p>";
+    html += "<p><strong>Mode actuel :</strong> " + String(isNight ? "🌙 NUIT" : "☀️ JOUR") + "</p>";
+    html += "<hr>";
+    html += "<p><a href='/config'>⚙️ Configuration</a> | ";
+    html += "<a href='/ota'>📤 Mise à jour OTA</a></p>";
+    html += "</body></html>";
+
+    iotWebConf.getWebServer()->send(200, "text/html", html);
+}
 
 void setupWebInterface() {
-  server.on("/", []() {
-    String html = "<html><body>";
-    html += "<h1>Contrôle du Projecteur</h1>";
-    html += "<button onclick='fetch(\"/relay/on\")'>Allumer</button>";
-    html += "<button onclick='fetch(\"/relay/off\")'>Éteindre</button>";
-    html += "</body></html>";
-    server.send(200, "text/html", html);
-  });
-
-  server.on("/relay/on", []() {
-    setRelay(true);
-    server.send(200, "text/plain", "Relais ON");
-  });
-
-  server.on("/relay/off", []() {
-    setRelay(false);
-    server.send(200, "text/plain", "Relais OFF");
-  });
-
-  server.begin();
+    iotWebConf.getWebServer()->on("/", handleRoot);
 }
 
 void handleWebInterface() {
-  server.handleClient();
+    // Rien à faire ici, IotWebConf gère tout
 }

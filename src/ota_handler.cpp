@@ -1,14 +1,12 @@
 #include "ota_handler.h"
+#include <ElegantOTA.h>
+#include "config.h"
 
 void setupOTA() {
-  ArduinoOTA.setHostname("Projecteur-X2");
-  // ArduinoOTA.setPassword("monmotdepasse");  // Désactivé pour les tests
-  ArduinoOTA.onStart([]() { Serial.println("Début OTA..."); });
-  ArduinoOTA.onEnd([]() { Serial.println("OTA terminé !"); });
-  ArduinoOTA.onError([](ota_error_t error) { Serial.printf("Erreur OTA: %u\n", error); });
-  ArduinoOTA.begin();
+    ElegantOTA.begin(iotWebConf.getWebServer());
+    Serial.println("ElegantOTA activé → http://IP/ota");
 }
 
 void handleOTA() {
-  ArduinoOTA.handle();
+    ElegantOTA.loop();
 }
