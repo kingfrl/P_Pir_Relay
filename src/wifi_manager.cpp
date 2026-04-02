@@ -6,8 +6,9 @@ DNSServer dnsServer;
 ESP8266WebServer server(80);
 
 const char wifiInitialApPassword[] = "12345678";
+const char thingName[] = "Projecteur-X2";
 
-IotWebConf iotWebConf("Projecteur-X2", &dnsServer, &server, wifiInitialApPassword);
+IotWebConf iotWebConf(thingName, &dnsServer, &server, wifiInitialApPassword);
 
 // Variables globales pour stocker les informations de localisation
 char latitudeValue[16] = "";
@@ -17,8 +18,9 @@ char cityValue[40] = "";
 
 void fetchLocationData() {
     if (WiFi.status() == WL_CONNECTED) {
+        WiFiClient client;
         HTTPClient http;
-        http.begin("http://ip-api.com/json/");
+        http.begin(client, "http://ip-api.com/json/");
 
         int httpCode = http.GET();
         if (httpCode > 0) {
@@ -48,7 +50,7 @@ void fetchLocationData() {
 void displayConfigPage() {
     String html = "<html><head><title>Configuration</title></head><body>";
     html += "<h1>Configuration de la Localisation</h1>";
-    html += "<form action='/saveConfig' method='post'>";
+    html += "<form action='/config' method='post'>";
     html += "<label for='city'>Ville:</label>";
     html += "<input type='text' id='city' name='city' value='" + String(cityValue) + "' readonly><br><br>";
     html += "<label for='latitude'>Latitude:</label>";
@@ -90,10 +92,8 @@ void handleRoot() {
 
 void setupWiFi() {
     iotWebConf.init();
-
     server.on("/", handleRoot);
     server.on("/config", displayConfigPage);
-    server.on("/saveConfig", saveConfig);
     server.onNotFound([](){ iotWebConf.handleNotFound(); });
 }
 

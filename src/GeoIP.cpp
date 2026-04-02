@@ -1,11 +1,13 @@
 #include <ESP8266HTTPClient.h>
+#include <WiFiClient.h>
 #include <ArduinoJson.h>
 #include "wifi_manager.h"
 
 void fetchLocationData() {
     if (WiFi.status() == WL_CONNECTED) {
+        WiFiClient client;
         HTTPClient http;
-        http.begin("http://ip-api.com/json/");
+        http.begin(client, "http://ip-api.com/json/");
 
         int httpCode = http.GET();
         if (httpCode > 0) {

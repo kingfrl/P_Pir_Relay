@@ -1,31 +1,37 @@
-#include "web_interface.h"
-#include "config.h"
-#include "time_utils.h"
-#include <IotWebConf.h>
+#include <ESP8266HTTPClient.h>
+#include <WiFiClient.h>
+#include <ArduinoJson.h>
+#include "wifi_manager.h"
 
-extern IotWebConf iotWebConf;
+void fetchLocationData() {
+    if (WiFi.status() == WL_CONNECTED) {
+        WiFiClient client;
+        HTTPClient http;
 
-void handleRoot() {
-    String html = "<!DOCTYPE html><html><head><meta charset='utf-8'>";
-    html += "<title>" PROJECT_NAME "</title>";
-    html += "<style>body{font-family:Arial;text-align:center;margin-top:50px;}</style></head><body>";
-    html += "<h1>" PROJECT_NAME " v" PROJECT_VERSION "</h1>";
-    html += "<p><strong>IP :</strong> " + WiFi.localIP().toString() + "</p>";
-    html += "<p><strong>Ville :</strong> " + String(cityValue) + "</p>";
-    html += "<p><strong>Lever :</strong> " + String(sunriseHour, 2) + "h</p>";
-    html += "<p><strong>Coucher :</strong> " + String(sunsetHour, 2) + "h</p>";
-    html += "<p><strong>État :</strong> " + String(isNight ? "🌙 NUIT" : "☀️ JOUR") + "</p>";
-    html += "<hr>";
-    html += "<p><a href='/config'>⚙️ Configuration</a></p>";
-    html += "</body></html>";
+        // Utiliser la nouvelle API de HTTPClient
+        http.begin(client, "http://ip-api.com/json/");
 
-    iotWebConf.getHtmlFormatProvider()->sendPage(html);
-}
+        int httpCode = http.GET();
+        if (httpCode > 0) {
+            String payload = http.getString();
+            DynamicJsonDocument doc(1024);
+            deserializeJson(doc, payload);
 
-void setupWebInterface() {
-    iotWebConf.setCustomHtmlRootHandler(handleRoot);
-}
+            const char* status = doc["status"];
+            if (strcmp(status, "success") == 0) {
+                const char* city = doc["city"];
+                double lat = doc["lat"];
+                double lon = doc["lon"];
+                const char* timezone = doc["timezone"];
 
-void handleWebInterface() {
-    // Rien à faire
+                dtostrf(lat, 6, 4, latitudeValue);
+                dtostrf(lon, 6, 4, longitudeValue);
+                strncpy(timezoneValue, timezone, 39);
+                timezoneValue[39] = '\0';
+                strncpy(cityValue, city, 39);
+                cityValue[39] = '\0';
+            }
+        }
+        http.end();
+    }
 }
