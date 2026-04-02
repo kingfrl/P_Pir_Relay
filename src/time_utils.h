@@ -10,6 +10,7 @@ extern double sunsetHour;
 
 void setupTimeUtils();
 void handleTimeUtils();        // À appeler dans loop()
+void calculateSunTimes();
 
 bool isCurrentlyNight();
 String getCurrentTimeFormatted();

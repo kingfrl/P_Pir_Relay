@@ -1,12 +1,11 @@
 #include "ota_handler.h"
-#include <ElegantOTA.h>
-#include "config.h"
+#include <Arduino.h>
 
 void setupOTA() {
-    ElegantOTA.begin(iotWebConf.getWebServer());
-    Serial.println("ElegantOTA activé → http://IP/ota");
+    Serial.println("OTA : ElegantOTA désactivé temporairement (incompatible simple avec IotWebConf v2)");
+    Serial.println("     Utilise l'upload du firmware via la page /config pour le moment");
 }
 
 void handleOTA() {
-    ElegantOTA.loop();
+    // Vide pour l'instant
 }

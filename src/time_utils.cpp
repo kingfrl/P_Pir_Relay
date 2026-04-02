@@ -24,6 +24,7 @@ unsigned long lastSunCalc = 0;
 unsigned long lastTimeUpdate = 0;
 
 // =============================================
+void calculateSunTimes();
 
 void setupTimeUtils() {
     Serial.println("Initialisation Time & Solar...");
@@ -67,38 +68,34 @@ void calculateSunTimes() {
 void handleTimeUtils() {
     unsigned long currentMillis = millis();
 
-    // Mise à jour NTP toutes les 10 secondes
+    // Mise à jour NTP
     if (currentMillis - lastTimeUpdate > 10000) {
         timeClient.update();
         lastTimeUpdate = currentMillis;
     }
 
-    // Recalcul du lever/coucher une fois par jour (à minuit)
-    if (currentMillis - lastSunCalc > 3600000UL) {  // toutes les heures pour sécurité
-        struct tm *timeinfo = localtime(&timeClient.getEpochTime());
-        if (timeinfo->tm_hour == 0 && (currentMillis - lastSunCalc > 3600000UL)) {
-            calculateSunTimes();
-            lastSunCalc = currentMillis;
-        }
+    // Recalcul lever/coucher toutes les heures
+    if (currentMillis - lastSunCalc > 3600000UL) {
+        calculateSunTimes();
+        lastSunCalc = currentMillis;
     }
 
-    // Mise à jour de l'état global isNight
     isNight = isCurrentlyNight();
 }
 
 // =============================================
 
 bool isCurrentlyNight() {
-    if (!timeClient.isTimeSet()) return true;  // Par sécurité : on considère nuit si pas d'heure
+    if (!timeClient.isTimeSet()) return true;
 
     time_t now = timeClient.getEpochTime();
-    struct tm *timeinfo = localtime(&now);
+    struct tm *timeinfo = localtime(&now);        // ← Correction ici
 
     double currentHour = timeinfo->tm_hour + (timeinfo->tm_min / 60.0);
 
-    // Ajoute une petite marge (ex: 30 min après coucher, 30 min avant lever)
     return (currentHour < (sunriseHour - 0.5)) || (currentHour > (sunsetHour + 0.5));
 }
+
 
 // =============================================
 

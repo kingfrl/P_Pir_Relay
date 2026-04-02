@@ -1,5 +1,6 @@
 #include <Arduino.h>
-#include <ESP8266WiFi.h>        // ← AJOUT IMPORTANT
+#include <ESP8266WiFi.h>
+#include <IotWebConf.h>
 #include "config.h"
 #include "wifi_manager.h"
 #include "ota_handler.h"
@@ -19,17 +20,25 @@ char timezoneValue[40] = "Europe/Paris";
 bool isNight = false;
 bool manualOverride = false;
 
-// Création de l'objet IotWebConf
-IotWebConf iotWebConf(PROJECT_NAME, nullptr, nullptr, AP_SSID, AP_PASSWORD);
+// IotWebConf 2.3.3 - Correct constructor
+DNSServer dnsServer;
+WebServer server(80);
 
-StringParameter cityParam("Ville", "city", cityValue, sizeof(cityValue), "Paris");
-StringParameter latitudeParam("Latitude", "lat", latitudeValue, sizeof(latitudeValue), "48.8566");
-StringParameter longitudeParam("Longitude", "lon", longitudeValue, sizeof(longitudeValue), "2.3522");
-StringParameter timezoneParam("Fuseau horaire", "tz", timezoneValue, sizeof(timezoneValue), "Europe/Paris");
+IotWebConf iotWebConf(PROJECT_NAME, &dnsServer, &server, AP_PASSWORD, CONFIG_VERSION);
+
+IotWebConfParameter cityParam("Ville", "city", cityValue, sizeof(cityValue));
+IotWebConfParameter latitudeParam("Latitude", "lat", latitudeValue, sizeof(latitudeValue));
+IotWebConfParameter longitudeParam("Longitude", "lon", longitudeValue, sizeof(longitudeValue));
+IotWebConfParameter timezoneParam("Fuseau horaire", "tz", timezoneValue, sizeof(timezoneValue));
 
 void setup() {
     Serial.begin(115200);
     Serial.println("\n\n=== " PROJECT_NAME " v" PROJECT_VERSION " démarrage ===");
+
+    iotWebConf.addParameter(&cityParam);
+    iotWebConf.addParameter(&latitudeParam);
+    iotWebConf.addParameter(&longitudeParam);
+    iotWebConf.addParameter(&timezoneParam);
 
     loadLocationFromEEPROM();
 

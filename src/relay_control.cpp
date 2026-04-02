@@ -1,5 +1,6 @@
 #include "relay_control.h"
 #include "config.h"
+#include "pir_sensor.h"
 
 bool relayState = false;
 
