@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 20px; background-color: #f4f4f9; color: #333; transition: background-color 0.5s; }
+        
+        /* Grille responsive */
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 0 15px;
+            box-sizing: border-box;
+        }
+        .full-width { grid-column: 1 / -1; } 
+
+        .box { 
+            border: 1px solid #ccc; padding: 15px; border-radius: 10px; 
+            background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            display: flex; flex-direction: column; 
+            justify-content: flex-start; /* Aligne les titres en haut */
+            align-items: center;
+            padding-top: 20px;
+        }
+        h2 { margin: 0 0 15px 0; font-size: 0.95em; color: #555; text-transform: uppercase; letter-spacing: 1px; width: 100%;}
+        
+        /* BOUTONS UNIFIES (Exactement la même forme pour les deux) */
+        .control-btn { 
+            width: 100px; height: 100px; border-radius: 50%; border: none; 
+            font-size: 1.2em; font-weight: bold; cursor: pointer; 
+            transition: 0.2s; line-height: 100px;
+            background: #e74c3c; color: white; box-shadow: 0 4px 0 #c0392b;
+            margin-top: auto; /* Pousse le bouton vers le bas pour aligner les deux */
+            margin-bottom: 10px;
+        }
+        .control-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #c0392b; }
+        .control-btn.on { background: #2ecc71; box-shadow: 0 4px 0 #27ae60; }
+        .control-btn.on:active { box-shadow: 0 0 0 #27ae60; }
+        
+        .timer-text { font-size: 1em; color: #e67e22; font-weight: bold; min-height: 1.2em; margin-bottom: 10px;}
+        
+        /* PIR */
+        .pir-ok { color: #7f8c8d; font-size: 1.1em; }
+        .pir-alert { color: #e74c3c; font-weight: bold; font-size: 1.1em; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.3; } }
+        
+        /* Boutons Radio */
+        .radio-group { text-align: left; margin-top: 10px; width: 100%; }
+        .radio-group input[type="radio"] { display: none; }
+        .radio-label { 
+            display: block; padding: 10px; margin: 5px 0; 
+            border: 2px solid #ecf0f1; border-radius: 8px; 
+            cursor: pointer; transition: 0.2s; background: #fafafa;
+        }
+        .radio-group input[type="radio"]:checked + .radio-label { 
+            border-color: #3498db; background: #ebf5fb; 
+        }
+        .radio-label strong { display: block; font-size: 1em; color: #2c3e50; }
+        .radio-label small { color: #7f8c8d; }
+        
+        /* Inputs Minuterie */
+        .settings-container {
+            width: 100%;
+            background: white !important;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            box-sizing: border-box;
+        }
+        .settings-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin: 10px 0; 
+            font-size: 1em; 
+            font-weight: bold;
+            color: #333 !important;
+        }
+        input[type="number"] { 
+            width: 60px; 
+            padding: 8px; 
+            font-size: 1.1em; 
+            text-align: center; 
+            border: 2px solid #ccc; 
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 480px) {
+            .grid-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-container">
+        
+        <!-- BLOC 1 : Nom + Réseau / Astro -->
+        <div class="box full-width">
+            <div style="font-size: 1em; font-weight: bold; color: #2c3e50; margin-bottom: 5px;">%DEVICENAME%</div>
+            <div style="font-size: 0.9em; color: #7f8c8d; margin-bottom: 5px;">IP : %IP%</div>
+            <div id="astro-text" style="font-size: 1.2em; font-weight: bold;">Synchronisation...</div>
+        </div>
+
+        <!-- BLOC 2 : PIR -->
+        <div class="box full-width">
+            <h2>Capteur de mouvement</h2>
+            <div id="pir-status" class="pir-ok">Aucun mouvement</div>
+        </div>
+
+        <!-- BLOC 3 : Jour / Nuit -->
+        <div class="box">
+            <h2>Mode JOUR / NUIT</h2>
+            <button class="control-btn" id="btn-daynight" onclick="sendAction('TOGGLE_DAYNIGHT')">OFF</button>
+        </div>
+
+        <!-- BLOC 4 : Relais -->
+        <div class="box">
+            <h2>Commande / Statut Relais</h2>
+            <div class="timer-text" id="timer-display"></div>
+            <button class="control-btn" id="btn-relay" onclick="sendAction('TOGGLE_RELAY')">OFF</button>
+        </div>
+
+        <!-- BLOC 5 : Modes et Config -->
+        <div class="box full-width">
+            <h2>Mode de fonctionnement</h2>
+            <div class="radio-group">
+                <label>
+                    <input type="radio" name="mode" value="MANUAL" onchange="sendSetMode('MANUAL')">
+                    <span class="radio-label">
+                        <strong>Mode Interrupteur</strong>
+                        <small>Commande manuelle uniquement</small>
+                    </span>
+                </label>
+                <label>
+                    <input type="radio" name="mode" value="AUTO" onchange="sendSetMode('AUTO')">
+                    <span class="radio-label">
+                        <strong>Mode Détection / Allumage</strong>
+                        <small>Le mouvement déclenche le relais</small>
+                    </span>
+                </label>
+                <label>
+                    <input type="radio" name="mode" value="ALARM" onchange="sendSetMode('ALARM')">
+                    <span class="radio-label">
+                        <strong>Mode Détection / Alarme</strong>
+                        <small>Surveillance silencieuse (pas d'allumage)</small>
+                    </span>
+                </label>
+            </div>
+
+            <div class="settings-container">
+                <div class="settings-row">
+                    <span>Extinction Manuelle :</span>
+                    <div><input type="number" id="in-manual" min="0" max="180" value="0" onchange="sendTimer('SET_MANUAL_TIMER', this.value)"> <small>min</small></div>
+                </div>
+                <div class="settings-row">
+                    <span>Durée Allumage Auto :</span>
+                    <div><input type="number" id="in-auto" min="1" max="60" value="5" onchange="sendTimer('SET_AUTO_TIMER', this.value)"> <small>min</small></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function sendAction(action) {
+            fetch('/api/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: action }) }).then(() => updateUI());
+        }
+        function sendSetMode(modeStr) {
+            fetch('/api/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'SET_MODE', value: modeStr }) }).then(() => updateUI());
+        }
+        function sendTimer(action, value) {
+            fetch('/api/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: action, value: parseInt(value) }) });
+        }
+
+        function updateUI() {
+            fetch('/api/status').then(response => response.json()).then(data => {
+                const astroText = document.getElementById('astro-text');
+                const btnDn = document.getElementById('btn-daynight');
+                
+                // Seul le fond du navigateur change (clair le jour, sombre la nuit)
+                if (data.dayNightEnabled) {
+                    btnDn.className = "control-btn on"; btnDn.innerText = "ON";
+                    astroText.innerText = data.isDayTime ? "☀️ C'est le jour" : "🌙 C'est la nuit";
+                    document.body.style.backgroundColor = data.isDayTime ? "#fdf2e9" : "#1a252f";
+                } else {
+                    btnDn.className = "control-btn"; btnDn.innerText = "OFF";
+                    astroText.innerText = data.isDayTime ? "☀️ C'est le jour" : "🌙 C'est la nuit"; 
+                    document.body.style.backgroundColor = "#1a252f";
+                }    
+
+                const pirDiv = document.getElementById('pir-status');
+                pirDiv.innerText = data.pirState ? "⚠️ MOUVEMENT DÉTECTÉ" : "Aucun mouvement";
+                pirDiv.className = data.pirState ? "pir-alert" : "pir-ok";
+
+                const relayBtn = document.getElementById('btn-relay');
+                relayBtn.innerText = data.relayState ? "ON" : "OFF";
+                relayBtn.className = data.relayState ? "control-btn on" : "control-btn";
+
+                const timerDiv = document.getElementById('timer-display');
+                if (data.remainingSeconds > 0) {
+                    let m = Math.floor(data.remainingSeconds / 60); let s = data.remainingSeconds % 60;
+                    timerDiv.innerText = "Extinction dans " + m + "m " + (s<10?'0':'') + s + "s";
+                } else { timerDiv.innerText = ""; }
+
+                document.querySelector(`input[name="mode"][value="${data.currentMode}"]`).checked = true;
+            });
+        }
+        updateUI(); setInterval(updateUI, 1000);
+    </script>
+</body>
+</html>

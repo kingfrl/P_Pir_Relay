@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../P_Pir_Relay"
+		},
+		{
+			"name": "MonRelaisPIR",
+			"path": "../MonRelaisPIR"
+		},
+		{
+			"name": "New_prog_8266",
+			"path": "."
+		}
+	],
+	"settings": {}
+}

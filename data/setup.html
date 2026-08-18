@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial; text-align: center; margin-top: 50px; }
+        select, button { width: 80%; padding: 10px; margin: 10px 0; font-size: 16px; box-sizing: border-box; }
+        .error { background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px;}
+        
+        /* Nouveau style pour l'input avec l'œil */
+        .password-container {
+            position: relative;
+            width: 80%;
+            margin: 10px auto;
+        }
+        .password-container input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .eye-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 18px;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <h2>Configuration WiFi</h2>
+    
+    <div class="error" id="msg" style="display: %DISPLAY_MSG%;">%MSG%</div>
+    
+    <form action="/connect" method="POST">
+        <select name="ssid" required>
+            <option value="" disabled selected>Choisir un réseau...</option>
+            %LIST%
+        </select><br>
+        
+        <div class="password-container">
+            <input type="password" id="pass" name="pass" placeholder="Mot de passe WiFi" required>
+            <span class="eye-btn" onclick="togglePassword()">👁️</span>
+        </div>
+        
+        <button type="submit">Se Connecter</button>
+    </form>
+
+    <script>
+        function togglePassword() {
+            var x = document.getElementById("pass");
+            if (x.type === "password") {
+                x.type = "text";
+            } else {
+                x.type = "password";
+            }
+        }
+    </script>
+</body>
+</html>
